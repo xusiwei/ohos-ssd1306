@@ -33,7 +33,7 @@ _BEGIN_STD_C
 #elif defined(STM32F7)
 #include "stm32f7xx_hal.h"
 #else
-#error "SSD1306 library was tested only on  STM32F0, STM32F1, STM32F3, STM32F4, STM32F7, STM32L0, STM32L4, STM32H7 MCU families. Please modify ssd1306.h if you know what you are doing. Also please send a pull request if it turns out the library works on other MCU's as well!"
+// #error "SSD1306 library was tested only on  STM32F0, STM32F1, STM32F3, STM32F4, STM32F7, STM32L0, STM32L4, STM32H7 MCU families. Please modify ssd1306.h if you know what you are doing. Also please send a pull request if it turns out the library works on other MCU's as well!"
 #endif
 
 #include "ssd1306_fonts.h"
@@ -80,7 +80,7 @@ _BEGIN_STD_C
 /* ^^^ SPI config ^^^ */
 
 #if defined(SSD1306_USE_I2C)
-extern I2C_HandleTypeDef SSD1306_I2C_PORT;
+// extern I2C_HandleTypeDef SSD1306_I2C_PORT;
 #elif defined(SSD1306_USE_SPI)
 extern SPI_HandleTypeDef SSD1306_SPI_PORT;
 #else
@@ -158,7 +158,11 @@ void ssd1306_SetDisplayOn(const uint8_t on);
  * @return  0: OFF.
  *          1: ON.
  */
-uint8_t ssd1306_GetDisplayOn();
+uint8_t ssd1306_GetDisplayOn(void);
+
+void HAL_Delay(uint32_t ms);
+
+uint32_t HAL_GetTick(void); // in ms
 
 // Low-level procedures
 void ssd1306_Reset(void);

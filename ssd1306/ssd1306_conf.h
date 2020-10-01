@@ -7,7 +7,7 @@
 #define __SSD1306_CONF_H__
 
 // Choose a microcontroller family
-#define STM32F0
+// #define STM32F0
 //#define STM32F1
 //#define STM32F4
 //#define STM32L0
@@ -21,7 +21,7 @@
 //#define SSD1306_USE_SPI
 
 // I2C Configuration
-#define SSD1306_I2C_PORT        hi2c1
+// #define SSD1306_I2C_PORT        hi2c1
 #define SSD1306_I2C_ADDR        (0x3C << 1)
 
 // Mirror the screen if needed

@@ -3,20 +3,78 @@
 #include <stdlib.h>
 #include <string.h>  // For memcpy
 
+#include <stdio.h>
+#include <unistd.h>
+#include "cmsis_os2.h"
+#include "wifiiot_i2c.h"
+
 #if defined(SSD1306_USE_I2C)
+
+#define SSD1306_I2C_IDX WIFI_IOT_I2C_IDX_0
+
+#define SSD1306_I2C_CMD 0x00
+#define SSD1306_I2C_DATA 0x40
+#define SSD1306_CONT_MASK (0x1<<7)
 
 void ssd1306_Reset(void) {
     /* for I2C - do nothing */
 }
 
+void HAL_Delay(uint32_t ms)
+{
+    uint32_t msPerTick = 1000 / osKernelGetTickFreq(); // 10ms
+    if (ms >= msPerTick) {
+        osDelay(ms / msPerTick);
+    }
+
+    uint32_t restMs = ms % msPerTick;
+    if (restMs > 0) {
+        usleep(restMs * 1000);
+    }
+}
+
+uint32_t HAL_GetTick(void)
+{
+    uint32_t msPerTick = 1000 / osKernelGetTickFreq(); // 10ms
+    uint32_t tickMs = osKernelGetTickCount() * msPerTick;
+
+    uint32_t csPerMs = osKernelGetSysTimerFreq() / 1000; // 160K cycle/ms
+    uint32_t csPerTick = csPerMs * msPerTick; // 1600K cycles/tick
+    uint32_t restMs = osKernelGetSysTimerCount() % csPerTick / csPerMs;
+
+    return tickMs + restMs;
+}
+
+static uint32_t ssd1306_SendData(uint8_t* data, size_t size)
+{
+    WifiIotI2cIdx id = SSD1306_I2C_IDX;
+    WifiIotI2cData i2cData = {0};
+    i2cData.sendBuf = data;
+    i2cData.sendLen = size;
+
+    return I2cWrite(id, SSD1306_I2C_ADDR, &i2cData);
+}
+
+static uint32_t ssd1306_WiteByte(uint8_t regAddr, uint8_t byte)
+{
+    uint8_t buffer[] = {regAddr, byte};
+    return ssd1306_SendData(buffer, sizeof(buffer));
+}
+
 // Send a byte to the command register
 void ssd1306_WriteCommand(uint8_t byte) {
-    HAL_I2C_Mem_Write(&SSD1306_I2C_PORT, SSD1306_I2C_ADDR, 0x00, 1, &byte, 1, HAL_MAX_DELAY);
+    ssd1306_WiteByte(SSD1306_I2C_CMD, byte);
 }
 
 // Send data
 void ssd1306_WriteData(uint8_t* buffer, size_t buff_size) {
-    HAL_I2C_Mem_Write(&SSD1306_I2C_PORT, SSD1306_I2C_ADDR, 0x40, 1, buffer, buff_size, HAL_MAX_DELAY);
+    static uint8_t sendBuffer[SSD1306_WIDTH * 2] = {0};
+    for (size_t i = 0; i < buff_size; i++) {
+        sendBuffer[i*2] = SSD1306_I2C_DATA | SSD1306_CONT_MASK;
+        sendBuffer[i*2+1] = buffer[i];
+    }
+    sendBuffer[(buff_size - 1) * 2] = SSD1306_I2C_DATA;
+    ssd1306_SendData(sendBuffer, sizeof(sendBuffer));
 }
 
 #elif defined(SSD1306_USE_SPI)
@@ -160,14 +218,14 @@ void ssd1306_Init(void) {
 
     // Clear screen
     ssd1306_Fill(Black);
-    
+
     // Flush buffer to screen
     ssd1306_UpdateScreen();
-    
+
     // Set default values for screen object
     SSD1306.CurrentX = 0;
     SSD1306.CurrentY = 0;
-    
+
     SSD1306.Initialized = 1;
 }
 
@@ -206,16 +264,16 @@ void ssd1306_DrawPixel(uint8_t x, uint8_t y, SSD1306_COLOR color) {
         // Don't write outside the buffer
         return;
     }
-    
+
     // Check if pixel should be inverted
     if(SSD1306.Inverted) {
         color = (SSD1306_COLOR)!color;
     }
-    
+
     // Draw in the right color
     if(color == White) {
         SSD1306_Buffer[x + (y / 8) * SSD1306_WIDTH] |= 1 << (y % 8);
-    } else { 
+    } else {
         SSD1306_Buffer[x + (y / 8) * SSD1306_WIDTH] &= ~(1 << (y % 8));
     }
 }
@@ -226,11 +284,11 @@ void ssd1306_DrawPixel(uint8_t x, uint8_t y, SSD1306_COLOR color) {
 // color    => Black or White
 char ssd1306_WriteChar(char ch, FontDef Font, SSD1306_COLOR color) {
     uint32_t i, b, j;
-    
+
     // Check if character is valid
     if (ch < 32 || ch > 126)
         return 0;
-    
+
     // Check remaining space on current line
     if (SSD1306_WIDTH < (SSD1306.CurrentX + Font.FontWidth) ||
         SSD1306_HEIGHT < (SSD1306.CurrentY + Font.FontHeight))
@@ -238,7 +296,7 @@ char ssd1306_WriteChar(char ch, FontDef Font, SSD1306_COLOR color) {
         // Not enough space on current line
         return 0;
     }
-    
+
     // Use the font to write
     for(i = 0; i < Font.FontHeight; i++) {
         b = Font.data[(ch - 32) * Font.FontHeight + i];
@@ -250,10 +308,10 @@ char ssd1306_WriteChar(char ch, FontDef Font, SSD1306_COLOR color) {
             }
         }
     }
-    
+
     // The current space is now taken
     SSD1306.CurrentX += Font.FontWidth;
-    
+
     // Return written char for validation
     return ch;
 }
@@ -266,11 +324,11 @@ char ssd1306_WriteString(char* str, FontDef Font, SSD1306_COLOR color) {
             // Char could not be written
             return *str;
         }
-        
+
         // Next char
         str++;
     }
-    
+
     // Everything ok
     return *str;
 }
@@ -289,7 +347,7 @@ void ssd1306_Line(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR 
   int32_t signY = ((y1 < y2) ? 1 : -1);
   int32_t error = deltaX - deltaY;
   int32_t error2;
-    
+
   ssd1306_DrawPixel(x2, y2, color);
     while((x1 != x2) || (y1 != y2))
     {
@@ -304,7 +362,7 @@ void ssd1306_Line(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR 
     {
     /*nothing to do*/
     }
-        
+
     if(error2 < deltaX)
     {
       error += deltaX;
@@ -362,9 +420,9 @@ void ssd1306_DrawArc(uint8_t x, uint8_t y, uint8_t radius, uint16_t start_angle,
     uint32_t count = 0;
     uint32_t loc_sweep = 0;
     float rad;
-    
+
     loc_sweep = ssd1306_NormalizeTo0_360(sweep);
-    
+
     count = (ssd1306_NormalizeTo0_360(start_angle) * CIRCLE_APPROXIMATION_SEGMENTS) / 360;
     approx_segments = (loc_sweep * CIRCLE_APPROXIMATION_SEGMENTS) / 360;
     approx_degree = loc_sweep / (float)approx_segments;
@@ -372,21 +430,21 @@ void ssd1306_DrawArc(uint8_t x, uint8_t y, uint8_t radius, uint16_t start_angle,
     {
         rad = ssd1306_DegToRad(count*approx_degree);
         xp1 = x + (int8_t)(sin(rad)*radius);
-        yp1 = y + (int8_t)(cos(rad)*radius);    
+        yp1 = y + (int8_t)(cos(rad)*radius);
         count++;
         if(count != approx_segments)
         {
             rad = ssd1306_DegToRad(count*approx_degree);
         }
         else
-        {            
+        {
             rad = ssd1306_DegToRad(loc_sweep);
         }
         xp2 = x + (int8_t)(sin(rad)*radius);
-        yp2 = y + (int8_t)(cos(rad)*radius);    
+        yp2 = y + (int8_t)(cos(rad)*radius);
         ssd1306_Line(xp1,yp1,xp2,yp2,color);
     }
-    
+
     return;
 }
 //Draw circle by Bresenhem's algorithm
