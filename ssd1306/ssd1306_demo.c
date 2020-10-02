@@ -43,7 +43,32 @@
 #include "ssd1306.h"
 #include "ssd1306_tests.h"
 
-#define OLED_I2C_BAUDRATE 1000*1000
+#define OLED_I2C_BAUDRATE 400*1000
+
+void TestGetTick(void)
+{
+    for (int i = 0; i < 20; i++) {
+        usleep(10*1000);
+        printf("HAL_GetTick(): %d\r\n", HAL_GetTick());
+    }
+
+    for (int i = 0; i < 20; i++) {
+        HAL_Delay(25);
+        printf(" HAL_GetTick(): %d\r\n", HAL_GetTick());
+    }
+}
+
+void TestAnimation(void)
+{
+    char text[32];
+    for (int i =  0; i < 50; i++) {
+        ssd1306_Fill(Black);
+        ssd1306_SetCursor(0, 0);
+        snprintf(text, sizeof(text), "i = %d", i);
+        ssd1306_WriteString(text, Font_11x18, White);
+        ssd1306_UpdateScreen();
+    }
+}
 
 void Ssd1306TestTask(void* arg)
 {
@@ -57,58 +82,16 @@ void Ssd1306TestTask(void* arg)
 
     ssd1306_Init();
     ssd1306_SetCursor(0, 0);
-    ssd1306_WriteString("Hello HarmonyOS!", Font_6x8, White);
+    ssd1306_WriteString("Hello HarmonyOS!", Font_7x10, White);
+    uint32_t start = HAL_GetTick();
     ssd1306_UpdateScreen();
+    uint32_t end = HAL_GetTick();
+    printf("ssd1306_UpdateScreen time cost: %d ms.\r\n", end - start);
 
-    for (int i = 0; i < 20; i++) {
-        usleep(10*1000);
-        printf("HAL_GetTick(): %d\r\n", HAL_GetTick());
-    }
-
-    for (int i = 0; i < 20; i++) {
-        HAL_Delay(25);
-        printf(" HAL_GetTick(): %d\r\n", HAL_GetTick());
-    }
-
-    for (int i = 0; i < 10; i++) {
-        static char text[32];
-        snprintf(text, sizeof(text), "tick: %d", HAL_GetTick());
-        ssd1306_SetCursor(0, 8);
-        ssd1306_WriteString(text, Font_6x8, White);
-        ssd1306_UpdateScreen();
-    }
-
-
+    TestGetTick();
+    TestAnimation();
     while (1) {
-        printf("ssd1306_TestFPS: %d\r\n", HAL_GetTick());
-        ssd1306_TestFPS();
-        HAL_Delay(3000);
-
-        printf("ssd1306_TestBorder\r\n");
-        ssd1306_TestBorder();
-
-        printf("ssd1306_TestFonts\r\n");
-        ssd1306_TestFonts();
-        HAL_Delay(3000);
-
-        printf("ssd1306_TestRectangle\r\n");
-        ssd1306_Fill(Black);
-        ssd1306_TestRectangle();
-        ssd1306_TestLine();
-        HAL_Delay(3000);
-
-        printf("ssd1306_TestPolyline\r\n");
-        ssd1306_Fill(Black);
-        ssd1306_TestPolyline();
-        HAL_Delay(3000);
-
-        ssd1306_Fill(Black);
-        ssd1306_TestArc();
-        HAL_Delay(3000);
-
-        ssd1306_Fill(Black);
-        ssd1306_TestCircle();
-        HAL_Delay(3000);
+        ssd1306_TestAll();
     }
 }
 
@@ -121,7 +104,7 @@ void Ssd1306TestDemo(void)
     attr.cb_mem = NULL;
     attr.cb_size = 0U;
     attr.stack_mem = NULL;
-    attr.stack_size = 4096;
+    attr.stack_size = 10240;
     attr.priority = osPriorityNormal;
 
     if (osThreadNew(Ssd1306TestTask, NULL, &attr) == NULL) {

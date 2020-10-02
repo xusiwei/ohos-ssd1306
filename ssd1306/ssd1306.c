@@ -12,9 +12,9 @@
 
 #define SSD1306_I2C_IDX WIFI_IOT_I2C_IDX_0
 
-#define SSD1306_I2C_CMD 0x00
-#define SSD1306_I2C_DATA 0x40
-#define SSD1306_CONT_MASK (0x1<<7)
+#define SSD1306_CTRL_CMD 0x00
+#define SSD1306_CTRL_DATA 0x40
+#define SSD1306_MASK_CONT (0x1<<7)
 
 void ssd1306_Reset(void) {
     /* for I2C - do nothing */
@@ -63,18 +63,18 @@ static uint32_t ssd1306_WiteByte(uint8_t regAddr, uint8_t byte)
 
 // Send a byte to the command register
 void ssd1306_WriteCommand(uint8_t byte) {
-    ssd1306_WiteByte(SSD1306_I2C_CMD, byte);
+    ssd1306_WiteByte(SSD1306_CTRL_CMD, byte);
 }
 
 // Send data
 void ssd1306_WriteData(uint8_t* buffer, size_t buff_size) {
-    static uint8_t sendBuffer[SSD1306_WIDTH * 2] = {0};
+    uint8_t data[SSD1306_WIDTH * 2] = {0};
     for (size_t i = 0; i < buff_size; i++) {
-        sendBuffer[i*2] = SSD1306_I2C_DATA | SSD1306_CONT_MASK;
-        sendBuffer[i*2+1] = buffer[i];
+        data[i*2] = SSD1306_CTRL_DATA | SSD1306_MASK_CONT;
+        data[i*2+1] = buffer[i];
     }
-    sendBuffer[(buff_size - 1) * 2] = SSD1306_I2C_DATA;
-    ssd1306_SendData(sendBuffer, sizeof(sendBuffer));
+    data[(buff_size - 1) * 2] = SSD1306_CTRL_DATA;
+    ssd1306_SendData(data, sizeof(data));
 }
 
 #elif defined(SSD1306_USE_SPI)
@@ -196,7 +196,7 @@ void ssd1306_Init(void) {
     ssd1306_WriteCommand(0xF0); //--set divide ratio
 
     ssd1306_WriteCommand(0xD9); //--set pre-charge period
-    ssd1306_WriteCommand(0x22); //
+    ssd1306_WriteCommand(0x11); // 0x22 by default
 
     ssd1306_WriteCommand(0xDA); //--set com pins hardware configuration - CHECK
 #if (SSD1306_HEIGHT == 32)
@@ -210,7 +210,7 @@ void ssd1306_Init(void) {
 #endif
 
     ssd1306_WriteCommand(0xDB); //--set vcomh
-    ssd1306_WriteCommand(0x20); //0x20,0.77xVcc
+    ssd1306_WriteCommand(0x30); //0x20,0.77xVcc, 0x30,0.83xVcc
 
     ssd1306_WriteCommand(0x8D); //--set DC-DC enable
     ssd1306_WriteCommand(0x14); //
@@ -247,12 +247,65 @@ void ssd1306_UpdateScreen(void) {
     //  * 32px   ==  4 pages
     //  * 64px   ==  8 pages
     //  * 128px  ==  16 pages
+
+#if 1
+    uint8_t cmd[] = {
+        0X21,   // 设置列起始和结束地址
+        0X00,   // 列起始地址 0
+        0X7F,   // 列终止地址 127
+        0X22,   // 设置页起始和结束地址
+        0X00,   // 页起始地址 0
+        0X07,   // 页终止地址 7
+    };
+    uint32_t count = 0;
+    uint8_t data[sizeof(cmd)*2 + SSD1306_BUFFER_SIZE + 1] = {};
+
+    // copy cmd
+    for (uint32_t i = 0; i < sizeof(cmd)/sizeof(cmd[0]); i++) {
+        data[count++] = SSD1306_CTRL_CMD | SSD1306_MASK_CONT;
+        data[count++] = cmd[i];
+    }
+
+    // copy frame data
+    data[count++] = SSD1306_CTRL_DATA;
+    for(uint8_t i = 0; i < SSD1306_HEIGHT/8; i++) {
+        for (uint32_t j = 0; j < SSD1306_WIDTH; j++) {
+            data[count++] = SSD1306_Buffer[SSD1306_WIDTH*i + j];
+        }
+    }
+
+    // send to i2c bus
+    ssd1306_SendData(data, count);
+#endif
+
+#if 0
+    uint32_t count = 0;
+    uint8_t data[(SSD1306_HEIGHT/8) * (3 + SSD1306_WIDTH) * 2] = {0};
+
+    for(uint8_t i = 0; i < SSD1306_HEIGHT/8; i++) {
+        data[count++] = SSD1306_CTRL_CMD | SSD1306_MASK_CONT;
+        data[count++] = 0xB0 + i; // Set the current RAM page address.
+        data[count++] = SSD1306_CTRL_CMD | SSD1306_MASK_CONT;
+        data[count++] = 0x00;
+        data[count++] = SSD1306_CTRL_CMD | SSD1306_MASK_CONT;
+        data[count++] = 0x10;
+        for (uint32_t j = 0; j < SSD1306_WIDTH; j++) {
+            data[count++] = SSD1306_CTRL_DATA | SSD1306_MASK_CONT;
+            data[count++] = SSD1306_Buffer[SSD1306_WIDTH*i + j];
+        }
+    }
+    data[count - 2] &= ~SSD1306_MASK_CONT;
+    ssd1306_SendData(data, count); // send once
+#endif
+
+#if 0
     for(uint8_t i = 0; i < SSD1306_HEIGHT/8; i++) {
         ssd1306_WriteCommand(0xB0 + i); // Set the current RAM page address.
         ssd1306_WriteCommand(0x00);
         ssd1306_WriteCommand(0x10);
         ssd1306_WriteData(&SSD1306_Buffer[SSD1306_WIDTH*i],SSD1306_WIDTH);
     }
+#endif
 }
 
 //    Draw one pixel in the screenbuffer
