@@ -1,4 +1,17 @@
-# stm32-ssd1306
+# harmonyos-ssd1306
+
+
+
+支持HarmonyOS IoT硬件接口的SSD1306 OLED屏驱动库;
+
+* 原始代码内置了一个128*64 bit的内存显示缓冲区，支持一次性全屏刷新;
+
+* 本项目在此基础上优化了屏幕刷新速率，目前测试最大帧率可达到10fps;
+* libm_port是从musl libc中抽取的部分数学函数，规避编译不通过的问题;
+
+
+
+## 原始README.md内容
 
 STM32 library for working with OLEDs based on SSD1306, SH1106, SH1107 and SSD1309,
 supports I2C and 4-wire SPI.
