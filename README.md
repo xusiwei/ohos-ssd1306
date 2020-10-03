@@ -11,25 +11,20 @@
 
 
 
-## 原始README.md内容
+## 如何编译
 
-STM32 library for working with OLEDs based on SSD1306, SH1106, SH1107 and SSD1309,
-supports I2C and 4-wire SPI.
+1. 在openharmony源码目录下克隆本项目：`git clone https://github.com/xusiwei/harmonyos-ssd1306`
 
-Tested on STM32F0, STM32F1, STM32F3, STM32F4, STM32L0, STM32L4, STM32F7 and STM32H7 MCUs, with 10 random displays from eBay.
-Also this code is known to work with
-[afiskon/fpga-ssd1306-to-vga](https://github.com/afiskon/fpga-ssd1306-to-vga).
+2. 修改openharmony源码的`build/lite/product/wifiiot.json`文件：
 
-Please see `examples` directory and `ssd1306/ssd1306.h` for more details.
+   将`//applications/sample/wifi-iot/app`替换为`//harmonyos-ssd1306:app`保存；
 
-The code is based on
-[4ilo/ssd1306-stm32HAL](https://github.com/4ilo/ssd1306-stm32HAL) library
-developed by Olivier Van den Eede ( [@4ilo](https://github.com/4ilo) ) in 2016.
+3. 在openharmony源码目录下执行：`python build.py wifiiot`
 
-See also:
 
-* https://github.com/afiskon/stm32-ssd1351
-* https://github.com/afiskon/stm32-st7735
-* https://github.com/afiskon/stm32-ili9341
 
-There is a [DuyTrandeLion/nrf52-ssd1309](https://github.com/DuyTrandeLion/nrf52-ssd1309) port to nRF52 of this library made by [@DuyTrandeLion](https://github.com/DuyTrandeLion) in 2020.
+## 参考链接
+
+本项目是基于afiskon的stm32-ssd1306移植的，对部分细节做了修改和优化，原项目链接：
+
+* https://github.com/afiskon/stm32-ssd1306
