@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include "cmsis_os2.h"
 #include "wifiiot_i2c.h"
+#include "wifiiot_errno.h"
 
 #if defined(SSD1306_USE_I2C)
 
@@ -275,7 +276,10 @@ void ssd1306_UpdateScreen(void) {
     }
 
     // send to i2c bus
-    ssd1306_SendData(data, count);
+    uint32_t retval = ssd1306_SendData(data, count);
+    if (retval != WIFI_IOT_SUCCESS) {
+        printf("ssd1306_UpdateScreen send frame data filed: %d!\r\n", retval);
+    }
 #endif
 
 #if 0
@@ -335,7 +339,7 @@ void ssd1306_DrawPixel(uint8_t x, uint8_t y, SSD1306_COLOR color) {
 // ch       => char om weg te schrijven
 // Font     => Font waarmee we gaan schrijven
 // color    => Black or White
-char ssd1306_WriteChar(char ch, FontDef Font, SSD1306_COLOR color) {
+char ssd1306_DrawChar(char ch, FontDef Font, SSD1306_COLOR color) {
     uint32_t i, b, j;
 
     // Check if character is valid
@@ -370,10 +374,10 @@ char ssd1306_WriteChar(char ch, FontDef Font, SSD1306_COLOR color) {
 }
 
 // Write full string to screenbuffer
-char ssd1306_WriteString(char* str, FontDef Font, SSD1306_COLOR color) {
+char ssd1306_DrawString(char* str, FontDef Font, SSD1306_COLOR color) {
     // Write until null-byte
     while (*str) {
-        if (ssd1306_WriteChar(*str, Font, color) != *str) {
+        if (ssd1306_DrawChar(*str, Font, color) != *str) {
             // Char could not be written
             return *str;
         }
@@ -393,7 +397,7 @@ void ssd1306_SetCursor(uint8_t x, uint8_t y) {
 }
 
 // Draw line by Bresenhem's algorithm
-void ssd1306_Line(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color) {
+void ssd1306_DrawLine(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color) {
   int32_t deltaX = abs(x2 - x1);
   int32_t deltaY = abs(y2 - y1);
   int32_t signX = ((x1 < x2) ? 1 : -1);
@@ -429,11 +433,11 @@ void ssd1306_Line(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR 
   return;
 }
 //Draw polyline
-void ssd1306_Polyline(const SSD1306_VERTEX *par_vertex, uint16_t par_size, SSD1306_COLOR color) {
+void ssd1306_DrawPolyline(const SSD1306_VERTEX *par_vertex, uint16_t par_size, SSD1306_COLOR color) {
   uint16_t i;
   if(par_vertex != 0){
     for(i = 1; i < par_size; i++){
-      ssd1306_Line(par_vertex[i - 1].x, par_vertex[i - 1].y, par_vertex[i].x, par_vertex[i].y, color);
+      ssd1306_DrawLine(par_vertex[i - 1].x, par_vertex[i - 1].y, par_vertex[i].x, par_vertex[i].y, color);
     }
   }
   else
@@ -495,7 +499,7 @@ void ssd1306_DrawArc(uint8_t x, uint8_t y, uint8_t radius, uint16_t start_angle,
         }
         xp2 = x + (int8_t)(sin(rad)*radius);
         yp2 = y + (int8_t)(cos(rad)*radius);
-        ssd1306_Line(xp1,yp1,xp2,yp2,color);
+        ssd1306_DrawLine(xp1,yp1,xp2,yp2,color);
     }
 
     return;
@@ -547,10 +551,10 @@ void ssd1306_DrawCircle(uint8_t par_x,uint8_t par_y,uint8_t par_r,SSD1306_COLOR 
 
 //Draw rectangle
 void ssd1306_DrawRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color) {
-  ssd1306_Line(x1,y1,x2,y1,color);
-  ssd1306_Line(x2,y1,x2,y2,color);
-  ssd1306_Line(x2,y2,x1,y2,color);
-  ssd1306_Line(x1,y2,x1,y1,color);
+  ssd1306_DrawLine(x1,y1,x2,y1,color);
+  ssd1306_DrawLine(x2,y1,x2,y2,color);
+  ssd1306_DrawLine(x2,y2,x1,y2,color);
+  ssd1306_DrawLine(x1,y2,x1,y1,color);
 
   return;
 }

@@ -26,7 +26,7 @@ void ssd1306_TestBorder() {
         ssd1306_UpdateScreen();
 
         end = HAL_GetTick();
-    } while((end - start) < 24000);
+    } while((end - start) < 8000);
 
     HAL_Delay(1000);
 }
@@ -34,13 +34,13 @@ void ssd1306_TestBorder() {
 void ssd1306_TestFonts() {
     ssd1306_Fill(Black);
     ssd1306_SetCursor(2, 0);
-    ssd1306_WriteString("Font 16x26", Font_16x26, White);
+    ssd1306_DrawString("Font 16x26", Font_16x26, White);
     ssd1306_SetCursor(2, 26);
-    ssd1306_WriteString("Font 11x18", Font_11x18, White);
+    ssd1306_DrawString("Font 11x18", Font_11x18, White);
     ssd1306_SetCursor(2, 26+18);
-    ssd1306_WriteString("Font 7x10", Font_7x10, White);
+    ssd1306_DrawString("Font 7x10", Font_7x10, White);
     ssd1306_SetCursor(2, 26+18+10);
-    ssd1306_WriteString("Font 6x8", Font_6x8, White);
+    ssd1306_DrawString("Font 6x8", Font_6x8, White);
     ssd1306_UpdateScreen();
 }
 
@@ -53,11 +53,11 @@ void ssd1306_TestFPS() {
     char message[] = "ABCDEFGHIJK";
 
     ssd1306_SetCursor(2,0);
-    ssd1306_WriteString("Testing...", Font_11x18, Black);
+    ssd1306_DrawString("Testing...", Font_11x18, Black);
 
     do {
         ssd1306_SetCursor(2, 18);
-        ssd1306_WriteString(message, Font_11x18, Black);
+        ssd1306_DrawString(message, Font_11x18, Black);
         ssd1306_UpdateScreen();
 
         char ch = message[0];
@@ -76,14 +76,14 @@ void ssd1306_TestFPS() {
 
     ssd1306_Fill(White);
     ssd1306_SetCursor(2, 18);
-    ssd1306_WriteString(buff, Font_11x18, Black);
+    ssd1306_DrawString(buff, Font_11x18, Black);
     ssd1306_UpdateScreen();
 }
 
 void ssd1306_TestLine() {
 
-  ssd1306_Line(1,1,SSD1306_WIDTH - 1,SSD1306_HEIGHT - 1,White);
-  ssd1306_Line(SSD1306_WIDTH - 1,1,1,SSD1306_HEIGHT - 1,White);
+  ssd1306_DrawLine(1,1,SSD1306_WIDTH - 1,SSD1306_HEIGHT - 1,White);
+  ssd1306_DrawLine(SSD1306_WIDTH - 1,1,1,SSD1306_HEIGHT - 1,White);
   ssd1306_UpdateScreen();
   return;
 }
@@ -127,7 +127,7 @@ void ssd1306_TestPolyline() {
       {53,16}
   };
 
-  ssd1306_Polyline(loc_vertex,sizeof(loc_vertex)/sizeof(loc_vertex[0]),White);
+  ssd1306_DrawPolyline(loc_vertex,sizeof(loc_vertex)/sizeof(loc_vertex[0]),White);
   ssd1306_UpdateScreen();
   return;
 }

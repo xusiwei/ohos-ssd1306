@@ -65,7 +65,7 @@ void TestAnimation(void)
         ssd1306_Fill(Black);
         ssd1306_SetCursor(0, 0);
         snprintf(text, sizeof(text), "i = %d", i);
-        ssd1306_WriteString(text, Font_11x18, White);
+        ssd1306_DrawString(text, Font_11x18, White);
         ssd1306_UpdateScreen();
     }
 }
@@ -80,9 +80,12 @@ void Ssd1306TestTask(void* arg)
 
     WatchDogDisable();
 
+    usleep(20*1000);
     ssd1306_Init();
+    ssd1306_Fill(Black);
     ssd1306_SetCursor(0, 0);
-    ssd1306_WriteString("Hello HarmonyOS!", Font_7x10, White);
+    ssd1306_DrawString("Hello HarmonyOS!", Font_7x10, White);
+
     uint32_t start = HAL_GetTick();
     ssd1306_UpdateScreen();
     uint32_t end = HAL_GetTick();
