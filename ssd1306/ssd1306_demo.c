@@ -58,18 +58,6 @@ void TestGetTick(void)
     }
 }
 
-void TestAnimation(void)
-{
-    char text[32];
-    for (int i =  0; i < 50; i++) {
-        ssd1306_Fill(Black);
-        ssd1306_SetCursor(0, 0);
-        snprintf(text, sizeof(text), "i = %d", i);
-        ssd1306_DrawString(text, Font_11x18, White);
-        ssd1306_UpdateScreen();
-    }
-}
-
 void Ssd1306TestTask(void* arg)
 {
     (void) arg;
@@ -92,7 +80,6 @@ void Ssd1306TestTask(void* arg)
     printf("ssd1306_UpdateScreen time cost: %d ms.\r\n", end - start);
 
     TestGetTick();
-    TestAnimation();
     while (1) {
         ssd1306_TestAll();
     }

@@ -143,6 +143,7 @@ void ssd1306_DrawPolyline(const SSD1306_VERTEX *par_vertex, uint16_t par_size, S
 void ssd1306_DrawRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color);
 void ssd1306_DrawArc(uint8_t x, uint8_t y, uint8_t radius, uint16_t start_angle, uint16_t sweep, SSD1306_COLOR color);
 void ssd1306_DrawCircle(uint8_t par_x, uint8_t par_y, uint8_t par_r, SSD1306_COLOR color);
+void ssd1306_DrawBitmap(const uint8_t* bitmap, uint32_t size);
 
 /**
  * @brief Sets the contrast of the display.
