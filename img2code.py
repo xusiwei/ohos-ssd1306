@@ -2,32 +2,42 @@
 import cv2
 import sys
 import os
+from datetime import datetime
 
 DEBUG = False
 # DEBUG = True
 TARGET_WIDTH = 128
 TARGET_HEIGHT = 64
 PIXEL_PER_BYTE = 8
+WIDTH_BYTES = int(TARGET_WIDTH/PIXEL_PER_BYTE)
 PIXEL_THRESHOUD = 128.0
+
+# 将多个灰度像素打包到一个整数中
+def PackPixels(pixels):
+    value = 0
+    for gray in pixels:
+        bit = 1 if gray >= PIXEL_THRESHOUD else 0 # 二值化
+        value = (value << 1) + bit # 多个二值化像素值拼接为一个字节值
+    return value
 
 def ConvertFrame(frame):
     byteArray = []
-    # bitStream = [] # for debug
-    count, value = 0, 0
+    # count = 0 # for debug
+    start = datetime.now()
+    frame = cv2.resize(frame, (TARGET_WIDTH, TARGET_HEIGHT)) # 缩放
+    frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY) # 转为灰度图
     for r in range(TARGET_HEIGHT):
-        for c in range(TARGET_WIDTH):
-            px = frame[r, c]
-            gray = sum(px)/len(px) # 灰度值
-            bit = 1 if gray > PIXEL_THRESHOUD else 0 # 二值化
-            # bitStream.append(bit) # for debug
-            if count < PIXEL_PER_BYTE:
-                value = (value << 1) + bit # 多个二值化像素值拼接为一个字节值
-                count += 1
-            if count == PIXEL_PER_BYTE:
-                byteArray.append(value)
-                count, value = 0, 0
-                # if DEBUG and value != 0 and value != 0xFF:
-                #     print('0x%02X = %s, %d, %d' % (value, str(bitStream[-8:]), r, c))
+        for c in range(WIDTH_BYTES):
+            colStart = c * WIDTH_BYTES
+            pixels = frame[r, colStart: colStart + PIXEL_PER_BYTE]
+            byte = PackPixels(pixels)
+            byteArray.append(byte)
+            # if DEBUG and byte != 0xFF and byte != 0x00:
+            #     count += 1
+            #     print(count, ':', pixels, '0x%02X' % byte)
+    end = datetime.now()
+    if DEBUG:
+        print('time cost:', end - start)
     return byteArray
 
 def main():
@@ -43,8 +53,7 @@ def main():
     if not os.path.exists(outdir):
         os.mkdir(outdir)
 
-    rawFrame = cv2.imread(imgPath) # 加载图片
-    frame = cv2.resize(rawFrame, (TARGET_WIDTH, TARGET_HEIGHT)) # 缩放
+    frame = cv2.imread(imgPath) # 加载图片
     byteArray = ConvertFrame(frame) # 转为目标格式的数组
 
     with open(codeFile, 'w+') as f: # 输出到.c文件
