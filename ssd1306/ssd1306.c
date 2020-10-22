@@ -249,7 +249,6 @@ void ssd1306_UpdateScreen(void) {
     //  * 64px   ==  8 pages
     //  * 128px  ==  16 pages
 
-#if 1
     uint8_t cmd[] = {
         0X21,   // 设置列起始和结束地址
         0X00,   // 列起始地址 0
@@ -280,36 +279,6 @@ void ssd1306_UpdateScreen(void) {
     if (retval != WIFI_IOT_SUCCESS) {
         printf("ssd1306_UpdateScreen send frame data filed: %d!\r\n", retval);
     }
-#endif
-
-#if 0
-    uint32_t count = 0;
-    uint8_t data[(SSD1306_HEIGHT/8) * (3 + SSD1306_WIDTH) * 2] = {0};
-
-    for(uint8_t i = 0; i < SSD1306_HEIGHT/8; i++) {
-        data[count++] = SSD1306_CTRL_CMD | SSD1306_MASK_CONT;
-        data[count++] = 0xB0 + i; // Set the current RAM page address.
-        data[count++] = SSD1306_CTRL_CMD | SSD1306_MASK_CONT;
-        data[count++] = 0x00;
-        data[count++] = SSD1306_CTRL_CMD | SSD1306_MASK_CONT;
-        data[count++] = 0x10;
-        for (uint32_t j = 0; j < SSD1306_WIDTH; j++) {
-            data[count++] = SSD1306_CTRL_DATA | SSD1306_MASK_CONT;
-            data[count++] = SSD1306_Buffer[SSD1306_WIDTH*i + j];
-        }
-    }
-    data[count - 2] &= ~SSD1306_MASK_CONT;
-    ssd1306_SendData(data, count); // send once
-#endif
-
-#if 0
-    for(uint8_t i = 0; i < SSD1306_HEIGHT/8; i++) {
-        ssd1306_WriteCommand(0xB0 + i); // Set the current RAM page address.
-        ssd1306_WriteCommand(0x00);
-        ssd1306_WriteCommand(0x10);
-        ssd1306_WriteData(&SSD1306_Buffer[SSD1306_WIDTH*i],SSD1306_WIDTH);
-    }
-#endif
 }
 
 //    Draw one pixel in the screenbuffer
