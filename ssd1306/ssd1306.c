@@ -268,11 +268,8 @@ void ssd1306_UpdateScreen(void) {
 
     // copy frame data
     data[count++] = SSD1306_CTRL_DATA;
-    for(uint8_t i = 0; i < SSD1306_HEIGHT/8; i++) {
-        for (uint32_t j = 0; j < SSD1306_WIDTH; j++) {
-            data[count++] = SSD1306_Buffer[SSD1306_WIDTH*i + j];
-        }
-    }
+    memcpy(&data[count], SSD1306_Buffer, sizeof(SSD1306_Buffer));
+    count += sizeof(SSD1306_Buffer);
 
     // send to i2c bus
     uint32_t retval = ssd1306_SendData(data, count);
