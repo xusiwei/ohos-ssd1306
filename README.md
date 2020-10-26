@@ -13,7 +13,7 @@
 
 ## 如何编译
 
-1. 在openharmony源码目录下克隆本项目：`git clone https://github.com/hihopeorg/harmonyos-ssd1306`
+1. 在openharmony源码目录下克隆本项目：`git clone https://gitee.com/hihopeorg/harmonyos-ssd1306`
 
 2. 修改openharmony源码的`build/lite/product/wifiiot.json`文件：
 
@@ -22,6 +22,22 @@
 3. 在openharmony源码目录下执行：`python build.py wifiiot`
 
 
+## 编译错误解决
+
+本项目代码使用了鸿蒙IoT硬件子系统的I2C API接口，需要连接到hi3861的I2C相关接口；默认情况下，Hi3861的I2C编译配置没有打开，编译时会有如下错误：
+
+```txt
+riscv32-unknown-elf-ld: ohos/libs/libhal_iothardware.a(hal_wifiiot_i2c.o): in function `.L0 ':
+hal_wifiiot_i2c.c:(.text.HalI2cWrite+0x12): undefined reference to `hi_i2c_write'
+riscv32-unknown-elf-ld: hal_wifiiot_i2c.c:(.text.HalI2cInit+0x12): undefined reference to `hi_i2c_init'
+scons: *** [output/bin/Hi3861_wifiiot_app.out] Error 1
+BUILD FAILED!!!!
+```
+
+**解决方法**
+
+需要修改vendor\hisi\hi3861\hi3861\build\config\usr_config.mk文件：
+`# CONFIG_I2C_SUPPORT is not set`行，修改为：`CONFIG_I2C_SUPPORT=y`
 
 ## 参考链接
 
