@@ -13,7 +13,7 @@
 
 ## 如何编译
 
-1. 在openharmony源码目录下克隆本项目：`git clone https://github.com/xusiwei/harmonyos-ssd1306`
+1. 在openharmony源码目录下克隆本项目：`git clone https://github.com/hihopeorg/harmonyos-ssd1306`
 
 2. 修改openharmony源码的`build/lite/product/wifiiot.json`文件：
 
