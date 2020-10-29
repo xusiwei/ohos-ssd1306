@@ -540,6 +540,29 @@ void ssd1306_DrawBitmap(const uint8_t* bitmap, uint32_t size)
     }
 }
 
+void ssd1306_DrawRegion(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t* data, uint32_t size, uint32_t stride)
+{
+    if (x + w > SSD1306_WIDTH || y + h > SSD1306_HEIGHT || w * h == 0) {
+        printf("%dx%d @ %d,%d out of range or invalid!\r\n", w, h, x, y);
+        return;
+    }
+
+    w = (w <= SSD1306_WIDTH ? w : SSD1306_WIDTH);
+    h = (h <= SSD1306_HEIGHT ? h : SSD1306_HEIGHT);
+    stride = (stride == 0 ? w : stride);
+
+    uint8_t rows = size * 8 / stride;
+    for (uint8_t i = 0; i < rows; i++) {
+        uint32_t base = i * stride / 8;
+        for (uint8_t j = 0; j < w; j++) {
+            uint32_t idx = base + (j / 8);
+            uint8_t byte = idx < size ? data[idx] : 0;
+            uint8_t bit  = byte & (0x80 >> (j % 8));
+            ssd1306_DrawPixel(x + j, y + i, bit ? White : Black);
+        }
+    }
+}
+
 void ssd1306_SetContrast(const uint8_t value) {
     const uint8_t kSetContrastControlRegister = 0x81;
     ssd1306_WriteCommand(kSetContrastControlRegister);
